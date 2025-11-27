@@ -1,6 +1,6 @@
 BINARY_NAME=justdoc
 BUILD_DIR=bin
-PORT?=8080
+PORT?=6001
 
 .PHONY: build run test lint clean docker
 
