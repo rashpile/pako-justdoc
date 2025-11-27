@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"sort"
+
 	"go.etcd.io/bbolt"
 )
 
@@ -51,6 +53,48 @@ func (s *BoltStorage) PutDocument(channel, document string, data []byte) (bool, 
 		return bucket.Put([]byte(document), data)
 	})
 	return created, err
+}
+
+// ListDocuments returns all document names in a channel (sorted alphabetically)
+func (s *BoltStorage) ListDocuments(channel string) ([]string, error) {
+	var docs []string
+	err := s.db.View(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket([]byte(channel))
+		if bucket == nil {
+			return ErrNotFound
+		}
+		return bucket.ForEach(func(k, v []byte) error {
+			docs = append(docs, string(k))
+			return nil
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(docs)
+	return docs, nil
+}
+
+// ListChannels returns all channels with document counts (sorted alphabetically)
+func (s *BoltStorage) ListChannels() ([]ChannelInfo, error) {
+	channels := make([]ChannelInfo, 0)
+	err := s.db.View(func(tx *bbolt.Tx) error {
+		return tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
+			count := b.Stats().KeyN
+			channels = append(channels, ChannelInfo{
+				Name:          string(name),
+				DocumentCount: count,
+			})
+			return nil
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(channels, func(i, j int) bool {
+		return channels[i].Name < channels[j].Name
+	})
+	return channels, nil
 }
 
 // Close closes the database connection

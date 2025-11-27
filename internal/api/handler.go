@@ -101,6 +101,43 @@ func (h *Handler) GetDocument(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
+// ListDocuments handles GET /{channel}/
+func (h *Handler) ListDocuments(w http.ResponseWriter, r *http.Request) {
+	channel := r.PathValue("channel")
+
+	if !model.IsValidName(channel) {
+		writeError(w, http.StatusBadRequest, model.ErrCodeInvalidName, "Invalid channel name")
+		return
+	}
+
+	docs, err := h.storage.ListDocuments(channel)
+	if err == storage.ErrNotFound {
+		writeError(w, http.StatusNotFound, model.ErrCodeNotFound, "Channel not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Internal server error")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(docs)
+}
+
+// ListChannels handles GET /
+func (h *Handler) ListChannels(w http.ResponseWriter, r *http.Request) {
+	channels, err := h.storage.ListChannels()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Internal server error")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(channels)
+}
+
 func writeError(w http.ResponseWriter, statusCode int, errCode, message string) {
 	writeJSON(w, statusCode, model.ErrorResponse{
 		Error:   errCode,

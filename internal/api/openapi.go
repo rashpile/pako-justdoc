@@ -23,6 +23,103 @@ const OpenAPISpec = `{
     }
   ],
   "paths": {
+    "/": {
+      "get": {
+        "summary": "List all channels",
+        "description": "Returns a list of all channels with document counts",
+        "operationId": "listChannels",
+        "tags": ["Channels"],
+        "responses": {
+          "200": {
+            "description": "List of channels retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChannelInfo"
+                  }
+                },
+                "example": [
+                  {
+                    "name": "app-config",
+                    "document_count": 3
+                  },
+                  {
+                    "name": "user-data",
+                    "document_count": 12
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{channel}/": {
+      "get": {
+        "summary": "List documents in a channel",
+        "description": "Returns a list of all document names in the specified channel",
+        "operationId": "listDocuments",
+        "tags": ["Channels"],
+        "parameters": [
+          {
+            "name": "channel",
+            "in": "path",
+            "required": true,
+            "description": "Channel name (alphanumeric, hyphens, underscores, max 128 chars)",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of documents retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "example": ["config", "settings", "user-preferences"]
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid channel name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "invalid_name",
+                  "message": "Invalid channel name"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Channel not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "not_found",
+                  "message": "Channel not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{channel}/{document}": {
       "get": {
         "summary": "Retrieve a document",
@@ -207,6 +304,20 @@ const OpenAPISpec = `{
   },
   "components": {
     "schemas": {
+      "ChannelInfo": {
+        "type": "object",
+        "required": ["name", "document_count"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Channel name"
+          },
+          "document_count": {
+            "type": "integer",
+            "description": "Number of documents in the channel"
+          }
+        }
+      },
       "SuccessResponse": {
         "type": "object",
         "required": ["status", "channel", "document"],
@@ -244,6 +355,10 @@ const OpenAPISpec = `{
     }
   },
   "tags": [
+    {
+      "name": "Channels",
+      "description": "Channel and document listing operations"
+    },
     {
       "name": "Documents",
       "description": "Document storage operations"

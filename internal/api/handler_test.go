@@ -285,3 +285,204 @@ func TestGetDocument_InvalidName(t *testing.T) {
 		t.Errorf("Expected error code %q, got %q", model.ErrCodeInvalidName, resp.Error)
 	}
 }
+
+func TestListDocuments_Success(t *testing.T) {
+	handler, cleanup := setupTestHandler(t)
+	defer cleanup()
+
+	// First store some documents
+	docs := []string{"doc1", "doc3", "doc2"} // Store in non-alphabetical order
+	for _, doc := range docs {
+		body := `{"test": "data"}`
+		req := httptest.NewRequest(http.MethodPost, "/mychannel/"+doc, strings.NewReader(body))
+		req.SetPathValue("channel", "mychannel")
+		req.SetPathValue("document", doc)
+		w := httptest.NewRecorder()
+		handler.PostDocument(w, req)
+		if w.Code != http.StatusCreated {
+			t.Fatalf("Failed to create document %s: status %d", doc, w.Code)
+		}
+	}
+
+	// Now list documents
+	req := httptest.NewRequest(http.MethodGet, "/mychannel/", nil)
+	req.SetPathValue("channel", "mychannel")
+	w := httptest.NewRecorder()
+	handler.ListDocuments(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	if w.Header().Get("Content-Type") != "application/json" {
+		t.Errorf("Expected Content-Type 'application/json', got %q", w.Header().Get("Content-Type"))
+	}
+
+	var result []string
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	// Verify alphabetical order
+	expected := []string{"doc1", "doc2", "doc3"}
+	if len(result) != len(expected) {
+		t.Fatalf("Expected %d documents, got %d", len(expected), len(result))
+	}
+	for i, name := range expected {
+		if result[i] != name {
+			t.Errorf("Position %d: expected %q, got %q", i, name, result[i])
+		}
+	}
+}
+
+func TestListDocuments_ChannelNotFound_Returns404(t *testing.T) {
+	handler, cleanup := setupTestHandler(t)
+	defer cleanup()
+
+	req := httptest.NewRequest(http.MethodGet, "/nonexistent/", nil)
+	req.SetPathValue("channel", "nonexistent")
+
+	w := httptest.NewRecorder()
+	handler.ListDocuments(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status %d, got %d", http.StatusNotFound, w.Code)
+	}
+
+	var resp model.ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if resp.Error != model.ErrCodeNotFound {
+		t.Errorf("Expected error code %q, got %q", model.ErrCodeNotFound, resp.Error)
+	}
+}
+
+func TestListDocuments_InvalidChannelName_Returns400(t *testing.T) {
+	handler, cleanup := setupTestHandler(t)
+	defer cleanup()
+
+	req := httptest.NewRequest(http.MethodGet, "/invalid@channel/", nil)
+	req.SetPathValue("channel", "invalid@channel")
+
+	w := httptest.NewRecorder()
+	handler.ListDocuments(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status %d, got %d", http.StatusBadRequest, w.Code)
+	}
+
+	var resp model.ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if resp.Error != model.ErrCodeInvalidName {
+		t.Errorf("Expected error code %q, got %q", model.ErrCodeInvalidName, resp.Error)
+	}
+}
+
+func TestListChannels_Success(t *testing.T) {
+	handler, cleanup := setupTestHandler(t)
+	defer cleanup()
+
+	// Create some channels with documents
+	channels := []struct {
+		name     string
+		docCount int
+	}{
+		{"zebra", 2},
+		{"alpha", 1},
+		{"beta", 3},
+	}
+
+	for _, ch := range channels {
+		for i := 1; i <= ch.docCount; i++ {
+			body := `{"test": "data"}`
+			req := httptest.NewRequest(http.MethodPost, "/"+ch.name+"/doc", strings.NewReader(body))
+			req.SetPathValue("channel", ch.name)
+			req.SetPathValue("document", "doc"+string(rune('0'+i)))
+			w := httptest.NewRecorder()
+			handler.PostDocument(w, req)
+			if w.Code != http.StatusCreated && w.Code != http.StatusOK {
+				t.Fatalf("Failed to create document in %s: status %d", ch.name, w.Code)
+			}
+		}
+	}
+
+	// List channels
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	handler.ListChannels(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	if w.Header().Get("Content-Type") != "application/json" {
+		t.Errorf("Expected Content-Type 'application/json', got %q", w.Header().Get("Content-Type"))
+	}
+
+	var result []storage.ChannelInfo
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	// Verify alphabetical order and document counts
+	if len(result) != 3 {
+		t.Fatalf("Expected 3 channels, got %d", len(result))
+	}
+
+	expected := []storage.ChannelInfo{
+		{Name: "alpha", DocumentCount: 1},
+		{Name: "beta", DocumentCount: 3},
+		{Name: "zebra", DocumentCount: 2},
+	}
+
+	for i, exp := range expected {
+		if result[i].Name != exp.Name {
+			t.Errorf("Position %d: expected name %q, got %q", i, exp.Name, result[i].Name)
+		}
+		if result[i].DocumentCount != exp.DocumentCount {
+			t.Errorf("Channel %q: expected document_count=%d, got %d", exp.Name, exp.DocumentCount, result[i].DocumentCount)
+		}
+	}
+}
+
+func TestListChannels_Empty_ReturnsEmptyArray(t *testing.T) {
+	handler, cleanup := setupTestHandler(t)
+	defer cleanup()
+
+	// List channels on empty database
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	handler.ListChannels(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	if w.Header().Get("Content-Type") != "application/json" {
+		t.Errorf("Expected Content-Type 'application/json', got %q", w.Header().Get("Content-Type"))
+	}
+
+	var result []storage.ChannelInfo
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	// Verify empty array (not null)
+	if result == nil {
+		t.Error("Expected empty array, got null")
+	}
+	if len(result) != 0 {
+		t.Errorf("Expected empty array, got %d channels", len(result))
+	}
+
+	// Also verify the raw JSON is "[]" not "null"
+	body := strings.TrimSpace(w.Body.String())
+	if body != "[]" {
+		t.Errorf("Expected JSON '[]', got %q", body)
+	}
+}
