@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Channel}} / {{.Document}} - JustDoc</title>
+    <link rel="stylesheet" href="/_/static/editor.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{.Channel}} / {{.Document}}</h1>
+        </header>
+        <main>
+            <div class="editor-wrapper">
+                <pre id="highlight" aria-hidden="true"></pre>
+                <textarea id="editor" spellcheck="false" placeholder="Enter JSON here..."></textarea>
+            </div>
+        </main>
+        <footer>
+            <button id="save-btn">Save</button>
+            <span id="status"></span>
+        </footer>
+    </div>
+    <script>
+        window.CHANNEL = "{{.Channel}}";
+        window.DOCUMENT = "{{.Document}}";
+    </script>
+    <script src="/_/static/editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header h1 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #333;
+    padding: 10px 0;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-wrapper {
+    position: relative;
+    flex: 1;
+    min-height: 400px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+#editor, #highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow: auto;
+}
+
+#editor {
+    background: transparent;
+    color: transparent;
+    caret-color: #333;
+    border: none;
+    resize: none;
+    z-index: 1;
+}
+
+#editor:focus {
+    outline: none;
+}
+
+#highlight {
+    color: #333;
+    pointer-events: none;
+    margin: 0;
+}
+
+.json-key { color: #881391; }
+.json-string { color: #1a1aa6; }
+.json-number { color: #1c6b48; }
+.json-boolean { color: #d73a49; }
+.json-null { color: #6f42c1; }
+
+footer {
+    padding: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#save-btn {
+    padding: 8px 24px;
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#save-btn:hover {
+    background: #0052a3;
+}
+
+#status {
+    font-size: 14px;
+}
+
+#status.success {
+    color: #1c6b48;
+}
+
+#status.error {
+    color: #d73a49;
+}

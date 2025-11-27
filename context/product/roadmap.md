@@ -1,45 +1,49 @@
- # Product Roadmap: JustDoc
+# Product Roadmap: JustDoc
 
 _This roadmap outlines our strategic direction based on customer needs and business goals. It focuses on the "what" and "why," not the technical "how."_
 
 ---
 
-### Phase 1
+### Phase 1 ✓
 
-_Project foundation — set up the development environment and project infrastructure._
+_Project foundation — completed._
 
-- [ ] **Project Infrastructure**
-  - [ ] **Initialize Git Repository:** Set up version control to track all project changes.
-  - [ ] **Project Structure:** Create the directory layout for source code, tests, and configuration.
-  - [ ] **Build Scripts:** Set up build tooling for compiling/bundling the application.
-  - [ ] **Makefile:** Create a Makefile with common commands (build, run, test, clean).
-  - [ ] **Development Environment:** Configure local development setup and dependencies.
+- [x] **Project Infrastructure**
+  - [x] Initialize Git Repository, Project Structure, Build Scripts, Makefile
 
 ---
 
-### Phase 2
+### Phase 2 ✓
 
-_Core functionality — implement the API endpoints and developer documentation._
+_Core functionality — completed._
 
-- [ ] **Document Operations**
-  - [ ] **Store/Update Document:** `POST /<channel>/<document>` to create or update a JSON document.
-  - [ ] **Retrieve Document:** `GET /<channel>/<document>` to fetch a stored JSON document.
+- [x] **Document Operations**
+  - [x] Store/Update Document: `POST /<channel>/<document>`
+  - [x] Retrieve Document: `GET /<channel>/<document>`
+  - [x] OpenAPI Documentation: `GET /openapi.json`
 
-- [ ] **Channel Operations**
-  - [ ] **List Documents in Channel:** `GET /<channel>/` to list all documents within a channel.
-  - [ ] **List All Channels:** `GET /` to list all available channels.
-
-- [ ] **Developer Experience**
-  - [ ] **API Documentation:** Create clear documentation with examples for all endpoints.
-  - [ ] **Quick Start Guide:** Write a guide enabling developers to integrate within 5 minutes.
+- [x] **Channel Operations**
+  - [x] List Documents in Channel: `GET /<channel>/`
+  - [x] List All Channels: `GET /`
 
 ---
 
-### Phase 3
+### Phase 3 ✓
+
+_User interface — completed._
+
+- [x] **Document Editor UI**
+  - [x] Edit documents: `GET /_/edit/<channel>/<document>`
+  - [x] JSON editor with syntax highlighting
+  - [x] Create, edit, and save documents via UI with minimalist design
+
+---
+
+### Phase 4
 
 _Future considerations — features to evaluate based on user feedback._
 
 - [ ] **Extended Functionality**
-  - [ ] **Delete Document:** `DELETE /<channel>/<document>` to remove documents.
-  - [ ] **Authentication:** Add API key-based authentication for secure access.
-  - [ ] **Rate Limiting:** Implement request throttling to prevent abuse.
+  - [ ] Delete Document: `DELETE /<channel>/<document>`
+  - [ ] Authentication: API key-based secure access
+  - [ ] Rate Limiting: Request throttling
